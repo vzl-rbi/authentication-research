@@ -40,31 +40,29 @@ export async function registerUser(req, res) {
   console.log("All validations passed:", { name, email, username });
   // Continue with user registration logic...
 }
+// Here's the completed registerUser function with the challenge requirements implemented:
+try {
+  const db = await getDBConnection();
 
-/*
-Key validation steps:
+  // 1. Check if username or email already exists
+  const checkUser = await db.get(
+    `SELECT username, email FROM users WHERE username = ? OR email = ?`,
+    [username, email]
+  );
 
-Checks for presence of all required fields
+  if (checkUser) {
+    return res.status(409).json({ error: "Email or username already in use." });
+  }
 
-Trims whitespace from text fields
+  // Insert new user
+  await db.run(
+    `INSERT INTO users (name, email, username, password) VALUES (?, ?, ?, ?)`,
+    [name, email, username, password]
+  );
 
-Validates username against the specified regex pattern
-
-Uses the validator package to check email format
-
-Returns appropriate error messages with 400 status code
-
-Includes console.logs for testing as requested
-
-The validation will:
-
-Reject empty fields with "All fields are required"
-
-Reject usernames with invalid characters or length with a descriptive message
-
-Reject invalid email formats with "Invalid email format"
-
-Continue with registration if all validations pass
-
-Remember to install the validator package if not already present:
-*/
+  // Success: User registered
+  return res.status(201).json({ message: "User rehistered" });
+} catch (err) {
+  console.error("Registration error:", err.message);
+  res.status(500).json({ error: "Registration failed. Please try again." });
+}
